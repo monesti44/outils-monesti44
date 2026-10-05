@@ -561,7 +561,9 @@ async function mountTool(id, host) {
   try {
     const r = await api("ouvrir", {id});
     if (r.demo) { host.innerHTML = `<div class="demotool">${thumb(o, "70%")}<h2>${esc(o.nom)}</h2><p>En ligne, l'outil s'ouvre ici en plein écran, après vérification de l'accès. Le portail le télécharge depuis votre Google Drive privé : il n'est jamais visible publiquement.</p><p class="note">Démonstration : aucun outil réel n'est chargé.</p></div>`; return; }
-    const blob = new Blob([r.html], {type: "text/html"});
+    const inj = "<script>window.PORTAIL=" + JSON.stringify({api: API_URL, token: S.token, user: S.user}).replace(/</g, "\\u003c") + "<\/script>";
+    const html = /<head[^>]*>/i.test(r.html) ? r.html.replace(/<head[^>]*>/i, m => m + inj) : inj + r.html;
+    const blob = new Blob([html], {type: "text/html"});
     const f = document.createElement("iframe"); f.className = "toolframe"; f.title = o.nom; f.src = URL.createObjectURL(blob);
     f.allow = "fullscreen; clipboard-write; autoplay"; f.setAttribute("allowfullscreen", "");
     S.frames[id] = f; host.innerHTML = ""; host.appendChild(f);
