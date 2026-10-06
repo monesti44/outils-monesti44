@@ -209,6 +209,26 @@ td .who span{font-size:12.5px;color:var(--muted)}
 .steps li::before{content:counter(s);position:absolute;left:16px;top:14px;width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
 .steps{padding:0}
 
+
+/* ---- réduire la barre latérale / passer en plein écran ---- */
+#side{position:relative;transition:padding .15s}
+#sideTog{position:absolute;top:22px;right:-13px;width:26px;height:26px;border-radius:50%;border:2px solid var(--side);background:var(--gold);color:#1b1503;font-weight:800;font-size:13px;line-height:1;display:grid;place-items:center;z-index:5;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+#app.mini{grid-template-columns:72px minmax(0,1fr)}
+#app.mini #side{padding:18px 10px}
+#app.mini #side .brand div,#app.mini #side nav .sep,#app.mini #side .me>div:not(.av),#app.mini #side .me button{display:none}
+#app.mini #side nav button{font-size:0;justify-content:center;padding:12px 0;gap:0}
+#app.mini #side nav button svg{width:22px;height:22px}
+#app.mini #side .me{justify-content:center;padding:6px}
+#app.mini #sideTog{transform:rotate(180deg)}
+#fullBtn{margin-left:auto;align-self:center;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:6px 11px;font-weight:700;font-size:13px;color:var(--muted);white-space:nowrap;display:flex;gap:6px;align-items:center}
+#fullBtn:hover{color:var(--fg);border-color:var(--gold)}
+#app.full{grid-template-columns:minmax(0,1fr)}
+#app.full #side,#app.full #topbar,#app.full #tabs{display:none}
+#unfull{display:none}
+#app.full #unfull{display:flex;position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:40;border:0;background:var(--gold);color:#1b1503;font-weight:800;font-size:12px;padding:3px 14px 5px;border-radius:0 0 12px 12px;box-shadow:0 3px 10px rgba(0,0,0,.25);gap:6px;align-items:center;opacity:.85}
+#app.full #unfull:hover{opacity:1;padding-top:6px}
+@media (max-width:900px){#sideTog,#fullBtn{display:none}}
+
 /* responsive */
 @media (max-width:900px){
   #login{grid-template-columns:1fr} #login .art{padding:28px 20px} #login .art h1{margin-top:20px}
@@ -255,7 +275,7 @@ td .who span{font-size:12.5px;color:var(--muted)}
 </div>
 
 <div id="app" hidden>
-  <aside id="side">
+  <aside id="side"><button id="sideTog" title="Réduire / agrandir le menu" aria-label="Réduire le menu">‹</button>
     <div class="brand"><svg width="38" height="38" viewBox="0 0 96 96" aria-hidden="true"><rect width="96" height="96" rx="22" fill="#173a5c"/><path d="M18 50 48 24l30 26" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><rect x="29" y="47" width="38" height="30" rx="5" fill="#5B6B7C"/><circle cx="48" cy="62" r="10" fill="none" stroke="#D9A62B" stroke-width="4" stroke-dasharray="4 3"/><circle cx="48" cy="62" r="4" fill="#D9A62B"/></svg>
       <div><b>monesti<span>44</span></b><small>Espace outils</small></div></div>
     <nav id="nav"></nav>
@@ -270,6 +290,7 @@ td .who span{font-size:12.5px;color:var(--muted)}
       <span id="demoTag" hidden>Démonstration · données d'exemple</span>
     </div>
     <div id="tabs" role="tablist"></div>
+    <button id="unfull" title="Revenir au menu et aux onglets">▾ Menu et onglets</button>
     <div id="views"></div>
   </main>
 </div>
@@ -408,7 +429,7 @@ function renderNav() {
 function renderTabs() {
   const tabs = [`<button role="tab" class="${!S.view.startsWith("t:") ? "on" : ""}" data-nav="accueil">${navic("accueil")}Accueil</button>`];
   S.tabs.forEach(id => { const o = S.outils.find(x => x.id === id); if (!o) return; tabs.push(`<button role="tab" class="${S.view === "t:" + id ? "on" : ""}" data-tab="${id}"><span class="dot" style="background:${esc(o.couleur)}"></span>${esc(o.nom)}<span class="x" data-close="${id}" title="Fermer l'onglet">×</span></button>`); });
-  $("#tabs").innerHTML = tabs.join("");
+  $("#tabs").innerHTML = tabs.join("") + `<button id="fullBtn" title="Cacher le menu et la barre du haut pour agrandir l'outil">⤢ Plein écran</button>`;
 }
 function thumb(o, w = "55%") {
   return `<div class="thumb" style="background:${esc(o.couleur)}">${ic(o.icone, "big", 54)}</div>`;
@@ -624,6 +645,11 @@ document.addEventListener("click", async e => {
 });
 $("#q").addEventListener("input", e => { S.q = e.target.value; if (!["accueil", "outils"].includes(S.view)) S.view = "outils"; const pos = e.target.selectionStart; go(S.view); });
 $("#burger").onclick = () => $("#app").classList.toggle("menu");
+/* menu réduit et plein écran : mémorisés sur cet appareil */
+try { if (localStorage.getItem("me44.mini") === "1") $("#app").classList.add("mini"); } catch (e) {}
+$("#sideTog").onclick = () => { const on = $("#app").classList.toggle("mini"); try { localStorage.setItem("me44.mini", on ? "1" : "0"); } catch (e) {} };
+document.addEventListener("click", e => { if (e.target.closest("#fullBtn")) $("#app").classList.add("full"); if (e.target.closest("#unfull")) $("#app").classList.remove("full"); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") $("#app").classList.remove("full"); });
 $("#btnOut").onclick = () => logout();
 $("#btnPw").onclick = pwDialog;
 $("#lgShow").onclick = () => { const i = $("#lgPw"); i.type = i.type === "password" ? "text" : "password"; $("#lgShow").textContent = i.type === "password" ? "Afficher" : "Masquer"; };
