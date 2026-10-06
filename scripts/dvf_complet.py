@@ -24,8 +24,23 @@ def tile_key(lat, lon):
 
 def fetch(url):
     req = urllib.request.Request(url, headers={"User-Agent": "monesti44-build"})
-    with urllib.request.urlopen(req, timeout=180) as r:
+    with urllib.request.urlopen(req, timeout=120) as r:
         return r.read()
+
+
+ARCHIVES = [
+    "https://files.data.gouv.fr/geo-dvf/{rel}/csv/{y}/departements/{dep}.csv.gz",
+    "https://files.opendatarchives.fr/cadastre.data.gouv.fr/data/etalab-dvf/{rel}/csv/{y}/departements/{dep}.csv.gz",
+]
+
+
+def versions_possibles(year):
+    """Noms de versions archivées (AAAA-MM) qui peuvent contenir l'année demandée, de la plus récente à la plus ancienne."""
+    out = []
+    for ry in range(min(year + 5, datetime.date.today().year), year, -1):
+        for mo in range(12, 0, -1):
+            out.append(f"{ry}-{mo:02d}")
+    return out
 
 
 def open_year(year, source_dir):
@@ -37,14 +52,8 @@ def open_year(year, source_dir):
                 raw = open(p, "rb").read()
                 return csv.DictReader(io.StringIO(gunzip(raw).decode("utf-8")))
     urls = [f"{BASE}/latest/csv/{year}/departements/{DEP}.csv.gz"]
-    if year <= 2020:
-        # Les années anciennes sortent du jeu « latest » : on cherche dans les versions archivées.
-        try:
-            listing = fetch(BASE + "/").decode("utf-8", "ignore")
-            releases = sorted(set(re.findall(r'href="(\d{4}-\d{2}(?:-\d{2})?)/?"', listing)), reverse=True)
-            urls += [f"{BASE}/{r}/csv/{year}/departements/{DEP}.csv.gz" for r in releases]
-        except Exception as e:
-            print("  liste des versions indisponible :", e)
+    for rel in versions_possibles(year):
+        urls += [modele.format(rel=rel, y=year, dep=DEP) for modele in ARCHIVES]
     for u in urls:
         try:
             raw = fetch(u)
@@ -162,6 +171,7 @@ def main():
         "periode_fin": max(s["d"] for s in uniques),
         "ventes": len(uniques),
         "par_annee": annees,
+        "annees_manquantes": [str(y) for y in range(ANNEE_DEBUT, this_year) if str(y) not in annees],
         "tuile": TILE,
         "tuiles": nt,
         "mise_a_jour": datetime.date.today().isoformat(),
