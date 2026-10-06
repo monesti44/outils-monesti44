@@ -1,17 +1,26 @@
 {
  "departement": "44",
- "periode_debut": "2021-01-04",
+ "periode_debut": "2014-01-02",
  "periode_fin": "2025-12-31",
- "ventes": 103380,
+ "ventes": 195961,
  "par_annee": {
+  "2014": 14773,
+  "2015": 16100,
+  "2016": 18120,
+  "2017": 21771,
+  "2018": 21834,
   "2021": 24807,
   "2022": 23208,
   "2023": 18687,
   "2024": 16895,
   "2025": 19806
  },
+ "annees_manquantes": [
+  "2019",
+  "2020"
+ ],
  "tuile": 50,
- "tuiles": 1992,
+ "tuiles": 2076,
  "mise_a_jour": "2026-10-06",
  "source": "DVF géolocalisées, data.gouv.fr (DGFiP / Etalab)"
 }
