@@ -56,6 +56,12 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:
 #login form{width:min(380px,100%);display:grid;gap:16px}
 #login form h2{font-size:24px}
 .field{display:grid;gap:6px}
+.sgRow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sgPhoto{display:flex;gap:14px;align-items:center}.sgPhoto b{font-size:14px}.sgPhoto .note{margin:2px 0 6px}
+#sgAv{width:76px;height:76px;border-radius:50%;flex:none;background:var(--bg) center/cover;border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:12px;font-weight:700}
+#sgAv.on{border:2px solid var(--gold)}#sgAv.on span{display:none}
+#sgFile{font-size:12px;max-width:100%}
+.sgOk{background:#e8f4ec;color:#1f5d3a;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.45}
 .field label{font-size:12.5px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
 .field input,.field select{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:12px 14px;width:100%}
 .field input:focus{border-color:var(--gold);outline:none;box-shadow:0 0 0 3px rgba(217,166,43,.25)}
@@ -254,7 +260,7 @@ td .who span{font-size:12.5px;color:var(--muted)}
       <ul>
         <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12.5l5 5L20 6.5"/></svg>Rien à installer, tout s'ouvre dans le navigateur</li>
         <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12.5l5 5L20 6.5"/></svg>Vos dossiers restent sur votre ordinateur</li>
-        <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12.5l5 5L20 6.5"/></svg>Accès personnel, sur invitation uniquement</li>
+        <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12.5l5 5L20 6.5"/></svg>Accès réservé aux conseillers de l'agence</li>
       </ul>
     </div>
     <p class="note" style="color:#8ea3ba;position:relative;z-index:1">© Nathan Frémont · outils développés à titre personnel</p>
@@ -270,6 +276,19 @@ td .who span{font-size:12.5px;color:var(--muted)}
       <button class="btn pri" id="lgBtn" type="submit">Se connecter</button>
       <p class="note">Mot de passe oublié ou accès bloqué ? Contactez Nathan Frémont au 06 72 45 76 60.</p>
       <p class="note" id="lgDemo" hidden>Démonstration : choisissez « Se connecter », les champs sont déjà remplis.</p>
+      <p class="note" style="margin-top:6px">Pas encore de compte ? <a href="#" id="toSignup" style="color:var(--gold);font-weight:700">Créer mon compte</a></p>
+    </form>
+    <form id="signupForm" novalidate hidden>
+      <h2>Créer mon compte</h2>
+      <p class="note" style="margin:-8px 0 4px">Votre mot de passe vous est envoyé par e-mail. Votre profil sert à signer vos lettres de prospection.</p>
+      <div class="sgPhoto"><label for="sgFile" id="sgAv" title="Ajouter ma photo"><span>Photo</span></label><div><b>Photo de profil</b><p class="note">Un portrait net, de face. Elle apparaît en bas de vos lettres.</p><input id="sgFile" type="file" accept="image/*"></div></div>
+      <div class="sgRow"><div class="field"><label for="sgPrenom">Prénom</label><input id="sgPrenom" autocomplete="given-name" required></div><div class="field"><label for="sgNom">Nom</label><input id="sgNom" autocomplete="family-name" required></div></div>
+      <div class="field"><label for="sgEmail">Adresse e-mail</label><input id="sgEmail" type="email" autocomplete="email" required placeholder="prenom.nom@agencebenoit.fr"></div>
+      <div class="field"><label for="sgTel">Téléphone</label><input id="sgTel" type="tel" autocomplete="tel" required placeholder="06 12 34 56 78"></div>
+      <div id="sgErr" class="err" hidden></div>
+      <div id="sgOk" class="sgOk" hidden></div>
+      <button class="btn pri" id="sgBtn" type="submit">Créer mon compte</button>
+      <p class="note">Déjà inscrit ? <a href="#" id="toLogin" style="color:var(--gold);font-weight:700">Se connecter</a></p>
     </form>
   </section>
 </div>
@@ -653,6 +672,23 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") $("#app").cl
 $("#btnOut").onclick = () => logout();
 $("#btnPw").onclick = pwDialog;
 $("#lgShow").onclick = () => { const i = $("#lgPw"); i.type = i.type === "password" ? "text" : "password"; $("#lgShow").textContent = i.type === "password" ? "Afficher" : "Masquer"; };
+/* ---------- inscription ---------- */
+let sgPhoto = "";
+function showSignup(on) { $("#loginForm").hidden = on; $("#signupForm").hidden = !on; }
+$("#toSignup").onclick = e => { e.preventDefault(); showSignup(true); };
+$("#toLogin").onclick = e => { e.preventDefault(); showSignup(false); };
+$("#sgFile").onchange = e => { const f = e.target.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { const im = new Image(); im.onload = () => { const S2 = 240, c = document.createElement("canvas"), k = Math.min(im.width, im.height); c.width = c.height = S2; c.getContext("2d").drawImage(im, (im.width - k) / 2, (im.height - k) / 2, k, k, 0, 0, S2, S2); let q = .86; sgPhoto = c.toDataURL("image/jpeg", q); while (sgPhoto.length > 46000 && q > .4) { q -= .1; sgPhoto = c.toDataURL("image/jpeg", q); } const a = $("#sgAv"); a.style.backgroundImage = `url(${sgPhoto})`; a.classList.add("on"); }; im.src = rd.result; }; rd.readAsDataURL(f); };
+$("#signupForm").addEventListener("submit", async e => {
+  e.preventDefault(); const b = $("#sgBtn"), er = $("#sgErr"), ok = $("#sgOk"); er.hidden = true; ok.hidden = true;
+  const d = {prenom: $("#sgPrenom").value.trim(), nom: $("#sgNom").value.trim(), email: $("#sgEmail").value.trim().toLowerCase(), tel: $("#sgTel").value.trim(), photo: sgPhoto};
+  if (!d.prenom || !d.nom || !d.email || !d.tel) { er.textContent = "Remplissez tous les champs."; er.hidden = false; return; }
+  if (!sgPhoto) { er.textContent = "Ajoutez votre photo de profil."; er.hidden = false; return; }
+  b.disabled = true; b.textContent = "Création…";
+  try { const j = await api("inscription", d); ok.innerHTML = j.auto ? `C'est fait, ${esc(d.prenom)} ! Votre mot de passe vient de partir à <b>${esc(d.email)}</b>. Pensez à regarder dans les indésirables.` : `Merci ${esc(d.prenom)}, votre demande est envoyée à Nathan Frémont. Vous recevrez votre mot de passe dès qu'il l'aura validée.`; ok.hidden = false; b.hidden = true; $("#lgEmail").value = d.email; }
+  catch (err) { er.textContent = err.message || "Inscription impossible."; er.hidden = false; }
+  finally { b.disabled = false; b.textContent = "Créer mon compte"; }
+});
+if (/[?&]inscription\b/.test(location.search)) setTimeout(() => showSignup(true), 0);
 $("#loginForm").addEventListener("submit", async e => {
   e.preventDefault(); const b = $("#lgBtn"); b.disabled = true; b.textContent = "Connexion…"; $("#lgErr").hidden = true;
   try { const j = await api("login", {email: $("#lgEmail").value.trim().toLowerCase(), password: $("#lgPw").value, rester: $("#lgRemember").checked}); S.token = j.token; saveToken(); $("#lgPw").value = ""; enter(j); }
